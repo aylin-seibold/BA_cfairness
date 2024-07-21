@@ -60,8 +60,10 @@ MutatorReset = R6::R6Class("MutatorReset", inherit = Mutator,
   private = list(
     .x_interest = NULL,
     
-    .mutate = function(values, context) {
-      params = self$param_set$get_values(context = context)
+    # .mutate = function(values, context) {
+    #   params = self$param_set$get_values(context = context)
+    .mutate = function(values) {
+      params = self$param_set$get_values()
       reset_columns(values, params$p_use_orig, params$max_changed, private$.x_interest)
     }
   )
@@ -94,8 +96,10 @@ RecombinatorReset = R6::R6Class("RecombinatorReset", inherit = Recombinator,
   private = list(
     .x_interest = NULL,
 
-    .recombine = function(values, context) {
-      params = self$param_set$get_values(context = context)
+    # .recombine = function(values, context) {
+    #   params = self$param_set$get_values(context = context)
+    .recombine = function(values) {
+      params = self$param_set$get_values()
       reset_columns(values, params$p_use_orig, params$max_changed, private$.x_interest)
     }
   )
@@ -155,13 +159,16 @@ ScalorNondomPenalized = R6::R6Class("ScalorNondomPenalized", inherit = Scalor,
     }
   ),
   private = list(
-    .scale = function(values, fitnesses, context) {
+    # .scale = function(values, fitnesses, context) {
+    .scale = function(values, fitnesses) {
 
-      params = self$param_set$get_values(context = context)
+      # params = self$param_set$get_values(context = context)
+      params = self$param_set$get_values()
       if (params$jitter) {
         fitnesses = fitnesses * (1 + runif(length(fitnesses)) * sqrt(.Machine$double.eps))
       }
-      sorted = order_nondominated(fitnesses)$fronts
+      # sorted = order_nondominated(fitnesses)$fronts
+      sorted = rank_nondominated(fitnesses)$fronts
       
       # Add penalization for individuals with -dist_target lower than -epsilon
       epsilon = params$epsilon
@@ -563,7 +570,8 @@ MutatorConditional = R6::R6Class("MutatorConditional", inherit = Mutator,
     p_mut = NULL,
     p_mut_gen = NULL,
     
-    .mutate = function(values, context) {
+    # .mutate = function(values, context) {
+    .mutate = function(values) {
       values_mutated = copy(values)
       for (i in seq_len(nrow(values))) {
         if (runif(1L) < private$p_mut) {
