@@ -5,93 +5,110 @@ library("mlr3pipelines")
 library("mlr3learners")
 library("mlr3fairness")
 library("randomForest")
-library("data.table")
-library("dplyr")
-source("code/sim_data.R")
 devtools::load_all("extern/counterfactuals")
+source("code/sim_data.R")
+source("code/utils.R")
+
+SEED <- 123
+generations = 30L
+
 
 #-----------#
 # Data without unmeasured confounder
 #-----------#
 
-# Random Forest
-SEED <- 123
-generations = 30L
-idxs = which(data_test$Sex == "male")
+### Data ##
+data_no_confounder_train # train data
+data_no_confounder_train[, Sex := NULL]
+data_no_confounder_test # test data
+data_no_confounder_counterfactual_female # counterfactual data do(Sex = female)
 
+idxs = which(data_no_confounder_test$Sex == "male") # row id for Sex = male
 
-# prep data
-data_train <- data.table(data_no_confounder_train) # train data
-data_train[, Sex := NULL]
-data_test <- data_no_confounder_test # test data
-# counterfactual data do(Sex = female)
-data_counterfactual <- data_no_confounder_counterfactual_female 
+### Fitting Predictors ###
 
-
+# Logistic Regression
+set.seed(SEED)
 learner = mlr_learners$get("classif.log_reg")
-task = as_task_classif(data_train, target = "Risk")
+task = as_task_classif(data_no_confounder_train, target = "Risk")
 learner$predict_type = "prob"
-
 set.seed(SEED)
 learner$train(task)
-predictor = iml::Predictor$new(learner, data = task$data(), y = "Risk")
-# Fit predictor
-# Fit predictor
+# Predictor Object
+predictor_lg = iml::Predictor$new(learner, data = data_no_confounder_test, y = "Risk")
+
+# Random Forest
 set.seed(SEED)
-rf = randomForest(Risk ~ ., data = data_train)
-# Create a predictor object
-predictor = iml::Predictor$new(rf, type = "prob", data = data_train)
-
-# Counterfactual fairness true counterfactuals
-
-pred1 <- predictor$predict(data_test[which(data_test$Sex == "male"),])
-pred2 <- predictor$predict(data_counterfactual[idxs,])
-
-(abs(sum(pred1[,1]-pred2[,1])))/nrow(pred2)
+rf = randomForest(Risk ~ ., data = data_no_confounder_train)
+# Predictor Object
+predictor_rf = iml::Predictor$new(rf, type = "prob", data = data_no_confounder_test)
 
 
+# AMPD and MBE for true Counterfactuals
+
+# With Logistic Regression
+calculate_ampd_mbe(predictor_rf, data_no_confounder_test, data_no_confounder_counterfactual_female, idxs)
+
+# With Random Forest
+calculate_ampd_mbe(predictor_lg, data_no_confounder_test, data_no_confounder_counterfactual_female, idxs)
+
+
+# generate mocf counterfactuals and calculate AMPD and MBE
+
+# With Logistic Regression
+calculate_ampd_mbe_moc(predictor_rf, data_no_confounder_test, idxs)
+
+# With Random Forest
+calculate_ampd_mbe_moc(predictor_lg, data_no_confounder_test, idxs)
 
 
 
 
+#-----------#
+# Data with unmeasured confounder
+#-----------#
 
+### Data ###
+
+data_confounder_train # train data
+data_confounder_train[, Sex := NULL]
+data_confounder_test # test data
+data_confounder_counterfactual_female # counterfactual data do(Sex = female)
+
+idxs = which(data_confounder_test$Sex == "male") # row id for Sex = male
+
+### Fitting Predictors ###
+
+# Logistic Regression
 set.seed(SEED)
-idxs = which(data_test$Sex == "male")
-cf_classif = CFClassif$new(predictor, protected = "Sex", n_generations = 50L)
-cfactuals = cf_classif$find_counterfactuals(
-  x_interest = data_test[idxs[1], ], desired_class = "female", desired_prob = c(0.5, 1)
-)
+learner = mlr_learners$get("classif.log_reg")
+task = as_task_classif(data_confounder_train, target = "Risk")
+learner$predict_type = "prob"
+set.seed(SEED)
+learner$train(task)
+# Predictor Object
+predictor_lg = iml::Predictor$new(learner, data = data_confounder_test, y = "Risk")
+
+# Random Forest
+set.seed(SEED)
+rf = randomForest(Risk ~ ., data = data_confounder_train)
+# Predictor Object
+predictor_rf = iml::Predictor$new(rf, type = "prob", data = data_confounder_test)
 
 
-pred1 <- predictor$predict(cfactuals$x_interest)
-pred2 <- predictor$predict(cfactuals$data)
+# AMPD and MBE for true Counterfactuals
 
-# AMPD
-(abs(sum(pred1[,1]-pred2[,1])))/nrow(pred2)
+# With Logistic Regression
+calculate_ampd_mbe(predictor_rf, data_confounder_test, data_confounder_counterfactual_female, idxs)
 
-cf_classif <- CFClassif$new(predictor, protected = "Sex", n_generations = 50L)
+# With Random Forest
+calculate_ampd_mbe(predictor_lg, data_confounder_test, data_confounder_counterfactual_female, idxs)
 
-# Initialize lists to store counterfactuals and predictions
-cf_list <- list()
-pred_list <- list()
 
-# Loop through all instances in idxs
-for (i in seq_along(idxs)) {
-  cfactuals <- cf_classif$find_counterfactuals(
-    x_interest = data_test[idxs[i], ], desired_class = "female", desired_prob = c(0.5, 1)
-  )
-  
-  # Store counterfactuals and predictions
-  cf_list[[i]] <- cfactuals
-  pred1 <- predictor$predict(cfactuals$x_interest)
-  pred2 <- predictor$predict(cfactuals$data)
-  pred_list[[i]] <- list(pred1 = pred1, pred2 = pred2)
-}
+# generate mocf counterfactuals and calculate AMPD and MBE
 
-# Calculate AMPD for all instances
-ampd_values <- sapply(pred_list, function(preds) {
-  abs(sum(preds$pred1[, 1] - preds$pred2[, 1])) / nrow(preds$pred2)
-})
+# With Logistic Regression
+calculate_ampd_mbe_moc(predictor_rf, data_confounder_test, idxs)
 
-# Print AMPD values
-sum(ampd_values)/length(ampd_values)
+# With Random Forest
+calculate_ampd_mbe_moc(predictor_lg, data_confounder_test, idxs)
