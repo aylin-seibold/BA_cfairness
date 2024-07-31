@@ -13,7 +13,6 @@ calculate_ampd_mbe <- function(predictor, data_test, data_counterfactual, idxs) 
 calculate_ampd_mbe_moc <- function(predictor, data_test, idxs) {
   # Set seed for reproducibility
   set.seed(123)
-  
   # Initialize lists to store counterfactuals and predictions
   cf_list <- list()
   pred_list <- list()
@@ -27,6 +26,7 @@ calculate_ampd_mbe_moc <- function(predictor, data_test, idxs) {
     cfactuals <- cf_classif$find_counterfactuals(
       x_interest = data_test[idxs[i], ], desired_class = "female", desired_prob = c(0.5, 1)
     )
+    cfactuals$subset_to_valid()
     
     # Store counterfactuals and predictions
     cf_list[[i]] <- cfactuals
@@ -41,7 +41,7 @@ calculate_ampd_mbe_moc <- function(predictor, data_test, idxs) {
   })
   
   # Calculate MBE
-  mbe <- sum(ampd) / length(ampd)
+  mbe <- sum(ampd, na.rm = TRUE) / length(which(!is.na(ampd)))
   
   return(list(AMPD = ampd, MBE = mbe))
 }

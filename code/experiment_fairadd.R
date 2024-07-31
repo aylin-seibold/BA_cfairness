@@ -16,11 +16,38 @@ generations = 30L
 # Data without unmeasured confounder
 #-----------#
 
-### Data ##
-# data_no_confounder_train # train data
-# data_no_confounder_test # test data
-# data_no_confounder_counterfactual_female # counterfactual data do(Sex = female)
-# data_no_confounder_counterfactual_male # counterfactual data do(Sex = male)
+# Resids train data
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_no_confounder_train)
+data_no_confounder_train$resi_sav <- data_no_confounder_train$Saving - predict(model_sav, newdata = data_no_confounder_train)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_no_confounder_train)
+data_no_confounder_train$resi_amo <- data_no_confounder_train$Amount - predict(model_sav, newdata = data_no_confounder_train)
+data_no_confounder_train[, c("Sex", "Saving", "Amount") := NULL]
+
+# Resids test data
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_no_confounder_test)
+data_no_confounder_test$resi_sav <- data_no_confounder_test$Saving - predict(model_sav, newdata = data_no_confounder_test)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_no_confounder_test)
+data_no_confounder_test$resi_amo <- data_no_confounder_test$Amount - predict(model_sav, newdata = data_no_confounder_test)
+#data_no_confounder_test[, c("Sex", "Saving", "Amount") := NULL]
+
+
+# Resids counterfactual data female
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_no_confounder_counterfactual_female)
+data_no_confounder_counterfactual_female$resi_sav <- data_no_confounder_counterfactual_female$Saving - predict(model_sav, newdata = data_no_confounder_counterfactual_female)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_no_confounder_counterfactual_female)
+data_no_confounder_counterfactual_female$resi_amo <- data_no_confounder_counterfactual_female$Amount - predict(model_sav, newdata = data_no_confounder_counterfactual_female)
+
+
+
 
 idxs = which(data_no_confounder_test$Sex == "male") # row id for Sex = male in test data
 
@@ -54,7 +81,6 @@ res_true_no_confounding_lg <- calculate_ampd_mbe(predictor_no_confounding_lg, da
 
 ### generate mocf counterfactuals and calculate AMPD and MBE ###
 # With Logistic Regression
-
 predictor <- predictor_no_confounding_rf
 res_gen_no_confounding_rf <- calculate_ampd_mbe_moc(predictor, data_no_confounder_test, idxs)
 
@@ -66,16 +92,41 @@ res_gen_no_confounding_lg <- calculate_ampd_mbe_moc(predictor, data_no_confounde
 
 
 #-----------#
-# Data with unmeasured confounder beta = 0.1
+# Data with unmeasured confounder 0.1
 #-----------#
 
 
 
-### Data ##
-data_confounder_l_train # train data
-data_confounder_l_test # test data
-data_confounder_l_counterfactual_female # counterfactual data do(Sex = female)
-data_confounder_l_counterfactual_male # counterfactual data do(Sex = male)
+# Resids train data
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_confounder_l_train)
+data_confounder_l_train$resi_sav <- data_confounder_l_train$Saving - predict(model_sav, newdata = data_confounder_l_train)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_confounder_l_train)
+data_confounder_l_train$resi_amo <- data_confounder_l_train$Amount - predict(model_sav, newdata = data_confounder_l_train)
+data_confounder_l_train[, c("Sex", "Saving", "Amount") := NULL]
+
+# Resids test data
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_confounder_l_test)
+data_confounder_l_test$resi_sav <- data_confounder_l_test$Saving - predict(model_sav, newdata = data_confounder_l_test)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_confounder_l_test)
+data_confounder_l_test$resi_amo <- data_confounder_l_test$Amount - predict(model_sav, newdata = data_confounder_l_test)
+
+
+# Resids counterfactual data female
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_confounder_l_counterfactual_female)
+data_confounder_l_counterfactual_female$resi_sav <- data_confounder_l_counterfactual_female$Saving - predict(model_sav, newdata = data_confounder_l_counterfactual_female)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_confounder_l_counterfactual_female)
+data_confounder_l_counterfactual_female$resi_amo <- data_confounder_l_counterfactual_female$Amount - predict(model_sav, newdata = data_confounder_l_counterfactual_female)
+
+
 
 idxs = which(data_confounder_l_test$Sex == "male") # row id for Sex = male in test data
 
@@ -99,7 +150,6 @@ predictor_confounding_l_rf = iml::Predictor$new(rf, type = "prob", data = data_c
 
 
 
-
 ### AMPD and MBE for true Counterfactuals ###
 # With Logistic Regression
 res_true_confounding_l_rf <- calculate_ampd_mbe(predictor_confounding_l_rf, data_confounder_l_test, data_confounder_l_counterfactual_female, idxs)
@@ -119,18 +169,44 @@ res_gen_confounding_l_lg <- calculate_ampd_mbe_moc(predictor, data_confounder_l_
 
 
 #-----------#
-# Data with unmeasured confounder beta = 0.9
+# Data with unmeasured confounder 0.7
 #-----------#
 
 
 
-### Data ##
-data_confounder_s_train # train data
-data_confounder_s_test # test data
-data_confounder_s_counterfactual_female # counterfactual data do(Sex = female)
-data_confounder_s_counterfactual_male # counterfactual data do(Sex = male)
 
-idxs = which(data_confounder_s_test$Sex == "male") # row id for Sex = male in test data
+# Resids train data
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_confounder_s_train)
+data_confounder_s_train$resi_sav <- data_confounder_s_train$Saving - predict(model_sav, newdata = data_confounder_s_train)
+
+# resids Amount
+modes_amo <- lm(Amount ~ Sex, data = data_confounder_s_train)
+data_confounder_s_train$resi_amo <- data_confounder_s_train$Amount - predict(model_sav, newdata = data_confounder_s_train)
+data_confounder_s_train[, c("Sex", "Saving", "Amount") := NULL]
+
+# Resids test data
+# resids Saving
+modes_sav <- lm(Saving ~ Sex, data = data_confounder_s_test)
+data_confounder_s_test$resi_sav <- data_confounder_s_test$Saving - predict(model_sav, newdata = data_confounder_s_test)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_confounder_s_test)
+data_confounder_s_test$resi_amo <- data_confounder_s_test$Amount - predict(model_sav, newdata = data_confounder_s_test)
+
+
+# Resids counterfactual data female
+# resids Saving
+model_sav <- lm(Saving ~ Sex, data = data_confounder_s_counterfactual_female)
+data_confounder_s_counterfactual_female$resi_sav <- data_confounder_s_counterfactual_female$Saving - predict(model_sav, newdata = data_confounder_s_counterfactual_female)
+
+# resids Amount
+model_amo <- lm(Amount ~ Sex, data = data_confounder_s_counterfactual_female)
+data_confounder_s_counterfactual_female$resi_amo <- data_confounder_s_counterfactual_female$Amount - predict(model_sav, newdata = data_confounder_s_counterfactual_female)
+
+
+
+idxs = which(data_confounder_l_test$Sex == "male") # row id for Sex = male in test data
 
 ### Fitting Predictors ###
 
@@ -149,7 +225,6 @@ set.seed(SEED)
 rf = randomForest(Risk ~ ., data = data_confounder_s_train)
 # Predictor Object
 predictor_confounding_s_rf = iml::Predictor$new(rf, type = "prob", data = data_confounder_s_test)
-
 
 
 
@@ -172,9 +247,8 @@ res_gen_confounding_s_lg <- calculate_ampd_mbe_moc(predictor, data_confounder_s_
 
 
 
-
 ### Save Results ###
-results_aware <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
+results_fairadd <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
                       res_true_no_confounding_rf = res_true_no_confounding_rf,
                       res_gen_no_confounding_lg = res_gen_no_confounding_lg, 
                       res_gen_no_confounding_rf = res_gen_no_confounding_rf,
@@ -187,4 +261,5 @@ results_aware <- list(res_true_no_confounding_lg = res_true_no_confounding_lg,
                       res_gen_confounding_s_lg = res_gen_confounding_s_lg,
                       res_gen_confounding_s_rf = res_gen_confounding_s_rf)
 
-saveRDS(results_aware, file="intermediate/results_aware.Rda")
+
+saveRDS(results_fairadd, file="intermediate/results_fairadd.Rda")

@@ -6,7 +6,7 @@ library("mlr3learners")
 library("mlr3fairness")
 library("randomForest")
 devtools::load_all("extern/counterfactuals")
-source("code/sim_data_unfair.R")
+source("code/sim_data_fair.R")
 source("code/utils.R")
 
 SEED <- 123
@@ -174,17 +174,17 @@ res_gen_confounding_s_lg <- calculate_ampd_mbe_moc(predictor, data_confounder_s_
 
 
 ### Save Results ###
-results_aware <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
-                      res_true_no_confounding_rf = res_true_no_confounding_rf,
-                      res_gen_no_confounding_lg = res_gen_no_confounding_lg, 
-                      res_gen_no_confounding_rf = res_gen_no_confounding_rf,
-                      res_true_confounding_l_lg = res_true_confounding_l_lg, 
-                      res_true_confounding_l_rf = res_true_confounding_l_rf, 
-                      res_gen_confounding_l_lg = res_gen_confounding_l_lg, 
-                      res_gen_confounding_l_rf = res_gen_confounding_l_rf,
-                      res_true_confounding_s_lg = res_true_confounding_s_lg, 
-                      res_true_confounding_s_rf = res_true_confounding_s_rf,
-                      res_gen_confounding_s_lg = res_gen_confounding_s_lg,
-                      res_gen_confounding_s_rf = res_gen_confounding_s_rf)
+results_fair <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
+                       res_true_no_confounding_rf = res_true_no_confounding_rf,
+                       res_gen_no_confounding_lg = res_gen_no_confounding_lg, 
+                       res_gen_no_confounding_rf = res_gen_no_confounding_rf,
+                       res_true_confounding_l_lg = res_true_confounding_l_lg, 
+                       res_true_confounding_l_rf = res_true_confounding_l_rf, 
+                       res_gen_confounding_l_lg = res_gen_confounding_l_lg, 
+                       res_gen_confounding_l_rf = res_gen_confounding_l_rf,
+                       res_true_confounding_s_lg = res_true_confounding_s_lg, 
+                       res_true_confounding_s_rf = res_true_confounding_s_rf,
+                       #res_gen_confounding_s_lg = res_gen_confounding_s_lg
+                       res_gen_confounding_s_rf = res_gen_confounding_s_rf)
 
-saveRDS(results_aware, file="intermediate/results_aware.Rda")
+saveRDS(results_fair, file="intermediate/results_fair.Rda")
