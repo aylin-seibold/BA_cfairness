@@ -174,6 +174,7 @@ res_gen_confounding_s_lg <- calculate_ampd_mbe_moc(predictor, data_confounder_s_
 
 
 ### Save Results ###
+
 results_fair <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
                        res_true_no_confounding_rf = res_true_no_confounding_rf,
                        res_gen_no_confounding_lg = res_gen_no_confounding_lg, 
@@ -184,7 +185,7 @@ results_fair <- list(res_true_no_confounding_lg = res_true_no_confounding_lg,
                        res_gen_confounding_l_rf = res_gen_confounding_l_rf,
                        res_true_confounding_s_lg = res_true_confounding_s_lg, 
                        res_true_confounding_s_rf = res_true_confounding_s_rf,
-                       #res_gen_confounding_s_lg = res_gen_confounding_s_lg
+                       res_gen_confounding_s_lg = res_gen_confounding_s_lg,
                        res_gen_confounding_s_rf = res_gen_confounding_s_rf)
 
 saveRDS(results_fair, file="intermediate/results_fair.Rda")
