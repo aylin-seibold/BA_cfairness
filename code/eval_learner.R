@@ -4,7 +4,7 @@ library("ggplot2")
 # Read lists of results
 results_aware <- readRDS("intermediate/results_aware.Rda")
 results_fairadd <- readRDS("intermediate/results_fairadd.Rda")
-results_fair <- readRDS("intermediate/results_fair.Rda")
+results_fairdata <- readRDS("intermediate/results_fairdata.Rda")
 results_ftu <- readRDS("intermediate/results_ftu.Rda")
 
 # Function to make barplots for MBE values over the true counterfactuals
@@ -58,9 +58,9 @@ pdf("plots/learner_fairadd.pdf", width=4, height=3)
 learner_fairadd
 dev.off()
 
-learner_fair <- generate_barplot(results_fair)
-print(learner_fair)
-pdf("plots/learner_fair.pdf", width=4, height=3)
-learner_fair
+learner_fairdata <- generate_barplot(results_fairdata)
+print(learner_fairdata)
+pdf("plots/learner_fairdata.pdf", width=4, height=3)
+learner_fairdata
 dev.off()
 

@@ -5,7 +5,7 @@ library("ggplot2")
 results_aware <- readRDS("intermediate/results_aware.Rda")
 results_ftu <- readRDS("intermediate/results_ftu.Rda")
 results_fairadd <- readRDS("intermediate/results_fairadd.Rda")
-results_fair <- readRDS("intermediate/results_fair.Rda")
+results_fairdata <- readRDS("intermediate/results_fairdata.Rda")
 
 #----------------------------------#
 #### Structure of this code ########
@@ -31,10 +31,10 @@ extract_relevant_data <- function(results, method) {
 df_aware <- extract_relevant_data(results_aware, "Aware")
 df_ftu <- extract_relevant_data(results_ftu, "Unaware")
 df_fairadd <- extract_relevant_data(results_fairadd, "Fair Add")
-df_fair <- extract_relevant_data(results_fair, "Fair Data")
+df_fairdata <- extract_relevant_data(results_fairdata, "Fair Data")
 
 # Combine the results for each method
-df_all <- rbind(df_aware, df_ftu, df_fairadd, df_fair)
+df_all <- rbind(df_aware, df_ftu, df_fairadd, df_fairdata)
 df_all$Method <- factor(df_all$Method, levels = c("Aware", "Unaware", "Fair Add", "Fair Data"))
 df_all$Dataset <- factor(df_all$Dataset, levels = c("no_confounding_rf", "confounding_s_rf"),
                          labels = c("DATA1", "DATA2"))
@@ -81,10 +81,10 @@ extract_relevant_data <- function(results, method) {
 df_aware <- extract_relevant_data(results_aware, "Aware")
 df_ftu <- extract_relevant_data(results_ftu, "Unaware")
 df_fairadd <- extract_relevant_data(results_fairadd, "Fair Add")
-df_fair <- extract_relevant_data(results_fair, "Fair Data")
+df_fairdata <- extract_relevant_data(results_fairdata, "Fair Data")
 
 # Combine the results for each method
-df_all <- rbind(df_aware, df_ftu, df_fairadd, df_fair)
+df_all <- rbind(df_aware, df_ftu, df_fairadd, df_fairdata)
 df_all$Method <- factor(df_all$Method, levels = c("Aware", "Unaware", "Fair Add", "Fair Data"))
 df_all$Dataset <- factor(df_all$Dataset, levels = c("no_confounding_lg", "confounding_s_lg"),
                          labels = c("DATA1", "DATA2"))

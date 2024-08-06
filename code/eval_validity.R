@@ -7,7 +7,7 @@ library("ggplot2")
 results_aware <- readRDS("intermediate/results_aware.Rda")
 results_ftu <- readRDS("intermediate/results_ftu.Rda")
 results_fairadd <- readRDS("intermediate/results_fairadd.Rda")
-results_fair <- readRDS("intermediate/results_fair.Rda")
+results_fairdata <- readRDS("intermediate/results_fairdata.Rda")
 
 
 #----------------------------------#
@@ -62,7 +62,7 @@ create_difference_table <- function(results_gen, caption = "Differences Between 
 table_aware <- create_difference_table(results_aware, "Differences Between Generated and True Results (Fair)")
 table_unaware <- create_difference_table(results_ftu, "Differences Between Generated and True Results (FTU)")
 table_fairadd <-  create_difference_table(results_fairadd, "Differences Between Generated and True Results (Fair Add)")
-table_fair <- create_difference_table(results_fair, "Differences Between Generated and True Results (Fair)")
+table_fairdata <- create_difference_table(results_fairdata, "Differences Between Generated and True Results (Fair Data)")
 
 
 #----------------------------------#
@@ -95,5 +95,5 @@ ampd_ftu <- ggplot(df_lg, aes(x = Type, y = Value)) +
 
 # Save plot
 pdf("plots/ampd_ftu.pdf", width=4, height=3)
-print(ampd_fairdata)
+print(ampd_ftu)
 dev.off()
