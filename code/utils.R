@@ -1,4 +1,4 @@
-# Function for calculating AMPD and MBE for a given predictor
+# Function for calculating AMPD and MBE for true counterf
 calculate_ampd_mbe <- function(predictor, data_test, data_counterfactual, idxs) {
   pred_test <- predictor$predict(data_test[idxs, ])
   pred_cf <- predictor$predict(data_counterfactual[idxs, ])
@@ -18,13 +18,13 @@ calculate_ampd_mbe_moc <- function(predictor, data_test, idxs) {
   pred_list <- list()
   
   # Create an instance of CFClassif
-  cf_classif <- CFClassif$new(predictor, protected = "Sex", n_generations = generations)
+  cf_classif <- CFClassif$new(predictor, protected = "A", n_generations = generations)
   
   # Loop through all instances in idxs
   for (i in seq_along(idxs)) {
     # Generate counterfactuals for the current instance
     cfactuals <- cf_classif$find_counterfactuals(
-      x_interest = data_test[idxs[i], ], desired_class = "female", desired_prob = c(0.5, 1)
+      x_interest = data_test[idxs[i], ], desired_class = "0", desired_prob = c(0.4, 1)
     )
     cfactuals$subset_to_valid()
     

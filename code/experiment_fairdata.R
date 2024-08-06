@@ -6,7 +6,7 @@ library("mlr3learners")
 library("mlr3fairness")
 library("randomForest")
 devtools::load_all("extern/counterfactuals")
-source("code/sim_data_unfair.R")
+source("code/sim_data_fair.R")
 source("code/utils.R")
 
 SEED <- 123
@@ -17,9 +17,8 @@ generations = 30L
 #-----------#
 
 
-data_no_confounder_train[, A := NULL]
 
-idxs = which(data_no_confounder_test$A == "1")
+idxs = which(data_no_confounder_test$A == "1") # row id for Sex = male in test data
 
 ### Fitting Predictors ###
 
@@ -60,19 +59,12 @@ predictor <- predictor_no_confounding_lg
 res_gen_no_confounding_lg <- calculate_ampd_mbe_moc(predictor, data_no_confounder_test, idxs)
 
 
-
-
-
 #-----------#
 # Data with unmeasured confounder beta = 0.9
 #-----------#
 
 
-
-
-data_confounder_s_train[, A := NULL]
-
-idxs = which(data_confounder_s_test$A == "1") # row id for Sex = male in test data
+idxs = which(data_confounder_s_test$A == "1")# row id for Sex = male in test data
 
 ### Fitting Predictors ###
 
@@ -105,13 +97,8 @@ res_true_confounding_s_lg <- calculate_ampd_mbe(predictor_confounding_s_lg, data
 
 ### generate mocf counterfactuals and calculate AMPD and MBE ###
 # With Logistic Regression
-
-start_time <- Sys.time() # time recording
 predictor <- predictor_confounding_s_rf
 res_gen_confounding_s_rf <- calculate_ampd_mbe_moc(predictor, data_confounder_s_test, idxs)
-end_time <- Sys.time()
-time_taken <- end_time -start_time
-
 
 # With Random Forest
 predictor <- predictor_confounding_s_lg
@@ -121,15 +108,14 @@ res_gen_confounding_s_lg <- calculate_ampd_mbe_moc(predictor, data_confounder_s_
 
 
 ### Save Results ###
-results_ftu <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
+results_fairdata <- list(res_true_no_confounding_lg = res_true_no_confounding_lg, 
                        res_true_no_confounding_rf = res_true_no_confounding_rf,
                        res_gen_no_confounding_lg = res_gen_no_confounding_lg, 
                        res_gen_no_confounding_rf = res_gen_no_confounding_rf,
                        res_true_confounding_s_lg = res_true_confounding_s_lg, 
                        res_true_confounding_s_rf = res_true_confounding_s_rf,
                        res_gen_confounding_s_lg = res_gen_confounding_s_lg,
-                       res_gen_confounding_s_rf = res_gen_confounding_s_rf,
-                    time_taken)
+                       res_gen_confounding_s_rf = res_gen_confounding_s_rf)
 
 
-saveRDS(results_ftu, file="intermediate/results_ftu.Rda")
+saveRDS(results_fairdata, file="intermediate/results_fairdata.Rda")

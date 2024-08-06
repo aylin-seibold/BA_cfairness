@@ -1,195 +1,112 @@
-# TODO: still needs to be commented out
-
 library(simcausal)
 library(data.table)
 
-n_train <- 1000 # 2000 # 10000
-n_test <- 200 # 400 # 2000
+#----------------------------------#
+#### Structure of this code ########
+#----------------------------------#
+# 1. Preparation DAG without confounder 
+# 2. Preparation DAG with confounder
+# 3. Simulation Data without confounder
+# 4. Simulation DAG with confounder
+#----------------------------------#
+
+n_train <- 1000 # 
+n_test <- 200 # 
 SEED <- 123
 
-#-----------#
-# Prepare DAGs
-#-----------#
-
-
-
-#-----------#
-# DAG without unmeasured confounder
-#-----------#
+#----------------------------------#
+#### 1. Preparation DAG without confounder  ####
+#----------------------------------#
 
 D_no_confounder <- DAG.empty()
-
 D_no_confounder <- D_no_confounder + 
-  node("Sex", # Sex
-       distr = "rbern", prob = 0.69)+
-  node("Saving", # Saving|Sex, Age,
-       distr = "rgamma", scale = 0.74*exp(7.9 - 0.175*Sex), shape = 1/0.74)+
-  node("Amount", #Amount|Sex, Age,
-       distr = "rgamma", scale = 0.74*exp(7.9 + 0.175*Sex), shape = 1/0.74)+
-  node("Risk", # Risk|Sex, Age, Amount, Saving
-       distr = "rbern", prob = plogis(0.9 + 2*Sex - 0.001*Saving - 0.001*Amount))
+  node("A", 
+       distr = "rbern", prob = 0.5)+
+  node("X1",
+       distr = "rbern", prob = plogis(4 - 1.25*A))+
+  node("X2", 
+       distr = "rgamma", scale = 0.74*exp(7.9), shape = 1/0.74)+
+  node("Y", 
+       distr = "rbern", prob = plogis(0.9 + 2*A - 1*X1 - 0.001*X2))
 
-# plotDAG(set.DAG(D_no_confounder))
-
+#plotDAG(set.DAG(D_no_confounder))
 D_no_confounder_set <- set.DAG(D_no_confounder)
 
-#-----------#
-# DAG with unmeasured confounder beta = 0.1
-#-----------#
-
-D_confounder_l <- DAG.empty()
-
-D_confounder_l <- D_confounder_l +
-  node("Sex", # Sex
-       distr = "rbern", prob = 0.69) +
-  node("C", # Latent Confounder C
-       distr = "rnorm", mean = 0, sd = 1) +
-  node("Saving", # Saving|Sex, Age,
-       distr = "rgamma", scale = 0.74*exp(7.9 - 0.175*Sex - 0.1*C), shape = 1/0.75) +
-  node("Amount", # Amount | Sex, U
-       distr = "rgamma", scale = 0.74*exp(7.9 + 0.175*Sex + 0.1*C), shape = 1/0.75) +
-  node("Risk", # Risk | Sex, Saving, Amounts
-       distr = "rbern", prob = plogis(0.9 + 2*Sex - 0.001*Saving - 0.001*Amount))
-
-# plotDAG(set.DAG(D_confounder_l))
-
-D_confounder_l_set <- set.DAG(D_confounder_l)
-
-#-----------#
-# DAG with unmeasured confounder beta = 0.9
-#-----------#
-
+#----------------------------------#
+#### 2. Preparation DAG with confounder  ####
+#----------------------------------#
 
 D_confounder_s <- DAG.empty()
-
 D_confounder_s <- D_confounder_s +
-  node("Sex", # Sex
-       distr = "rbern", prob = 0.69) +
-  node("C", # Latent Confounder C
+  node("C",
        distr = "rnorm", mean = 0, sd = 1) +
-  node("Saving", # Saving|Sex, Age,
-       distr = "rgamma", scale = 0.74*exp(7.9 - 0.175*Sex - 0.7*C), shape = 1/0.75) +
-  node("Amount", # Amount | Sex, U
-       distr = "rgamma", scale = 0.74*exp(7.9 + 0.175*Sex + 0.7*C), shape = 1/0.75) +
-  node("Risk", # Risk | Sex, Saving, Amounts
-       distr = "rbern", prob = plogis(0.9 + 2*Sex - 0.001*Saving - 0.001*Amount))
-
+  node("A", 
+       distr = "rbern", prob = plogis(0.5 + 0.7*C))+
+  node("X1", 
+       distr = "rbern", prob = plogis(4 + 1.25*A))+
+  node("X2", 
+       distr = "rgamma", scale = 0.74*exp(7.9 - 0.7*C), shape = 1/0.74)+
+  node("Y", 
+       distr = "rbern", prob = plogis(0.9 + 2*A + 1*X1 - 0.005*X2))
 # plotDAG(set.DAG(D_confounder_s))
-
 D_confounder_s_set <- set.DAG(D_confounder_s)
 
-#-----------#
-# Simulate Data
-#-----------#
 
+#----------------------------------#
+#### 3. Simulation Data without confounder  ####
+#----------------------------------#
 
-#-----------#
-# Sim: DAG without unmeasured confounder
-#-----------#
-
-# train data
+# Train data
 data_no_confounder_train <- simcausal::sim(DAG = D_no_confounder_set,
                                            n = n_train,
                                            rndseed = SEED,
                                            verbose = FALSE)
 
+
 data_no_confounder_train <- data_no_confounder_train[,-1]
-data_no_confounder_train$Sex <- factor(data_no_confounder_train$Sex, levels = c(0:1), labels = c("female", "male"))
-data_no_confounder_train$Risk <- factor(data_no_confounder_train$Risk, levels = c(0:1), labels = c("bad", "good"))
+data_no_confounder_train$A <- factor(data_no_confounder_train$A, levels = c(0:1), labels = c("0", "1"))
+data_no_confounder_train$Y <- factor(data_no_confounder_train$Y, levels = c(0:1), labels = c("0", "1"))
 data_no_confounder_train <- data.table(data_no_confounder_train)
 
-# test data + counterfactual data with preserving the disbalance of Sex
 
-A <- node("Sex", distr = "rbern", prob = 0.69)
-D_no_confounder_set <- D_no_confounder_set + action("A", nodes = A) # no intervention
-A1 <- node("Sex", distr = "rbern", prob = 0.69)
-D_no_confounder_set <- D_no_confounder_set + action("A1", nodes = A1) # intervention -> female
-A0 <- node("Sex", distr = "rbern", prob = 0.31)
-D_no_confounder_set <- D_no_confounder_set + action("A0", nodes = A0) # intervention -> male
+# Test data and counterfactual data
+I <- node("A", distr = "rbern", prob = 0.5)
+D_no_confounder_set <- D_no_confounder_set + action("I", nodes = I) # test data 
+I1 <- node("A", distr = "rbern", prob = 1)
+D_no_confounder_set <- D_no_confounder_set + action("I1", nodes = I1) # intervention -> class1
+I0 <- node("A", distr = "rbern", prob = 0)
+D_no_confounder_set <- D_no_confounder_set + action("I0", nodes = I0) # intervention -> class0
 
 data_no_confounder_counterfactual <- simcausal::sim(DAG = D_no_confounder_set,
-                                                    actions = c("A", "A1", "A0"),
+                                                    actions = c("I", "I1", "I0"),
                                                     n = n_test,
                                                     rndseed = SEED,
                                                     verbose = FALSE)
 
-data_no_confounder_test <- data_no_confounder_counterfactual[["A"]]
+data_no_confounder_test <- data_no_confounder_counterfactual[["I"]]
 data_no_confounder_test <- data_no_confounder_test[,-1]
-data_no_confounder_test$Sex <- factor(data_no_confounder_test$Sex, levels = c(0:1), labels = c("female", "male"))
-data_no_confounder_test$Risk <- factor(data_no_confounder_test$Risk, levels = c(0:1), labels = c("bad", "good"))
+data_no_confounder_test$A <- factor(data_no_confounder_test$A, levels = c(0:1), labels = c("0", "1"))
+data_no_confounder_test$Y <- factor(data_no_confounder_test$Y, levels = c(0:1), labels = c("0", "1"))
 data_no_confounder_test <- data.table(data_no_confounder_test)
 
 
-data_no_confounder_counterfactual_female<- data_no_confounder_counterfactual[["A0"]]
-data_no_confounder_counterfactual_female<- data_no_confounder_counterfactual_female[,-1]
-data_no_confounder_counterfactual_female$Sex <- factor(data_no_confounder_counterfactual_female$Sex, levels = c(0:1), labels = c("female", "male"))
-data_no_confounder_counterfactual_female$Risk <- factor(data_no_confounder_counterfactual_female$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_no_confounder_counterfactual_female <- data.table(data_no_confounder_counterfactual_female)
+data_no_confounder_counterfactual_class0 <- data_no_confounder_counterfactual[["I0"]]
+data_no_confounder_counterfactual_class0 <- data_no_confounder_counterfactual_class0[,-1]
+data_no_confounder_counterfactual_class0$A <- factor(data_no_confounder_counterfactual_class0$A, levels = c(0:1), labels = c("0", "1"))
+data_no_confounder_counterfactual_class0$Y <- factor(data_no_confounder_counterfactual_class0$Y, levels = c(0:1), labels = c("0", "1"))
+data_no_confounder_counterfactual_class0 <- data.table(data_no_confounder_counterfactual_class0)
 
 
-data_no_confounder_counterfactual_male<- data_no_confounder_counterfactual[["A1"]]
-data_no_confounder_counterfactual_male<- data_no_confounder_counterfactual_male[,-1]
-data_no_confounder_counterfactual_male$Sex <- factor(data_no_confounder_counterfactual_male$Sex, levels = c(0:1), labels = c("female", "male"))
-data_no_confounder_counterfactual_male$Risk <- factor(data_no_confounder_counterfactual_male$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_no_confounder_counterfactual_male <- data.table(data_no_confounder_counterfactual_male)
-
-# all.equal(data_no_confounder_counterfactual_female$Sex,data_no_confounder_counterfactual_male$Sex )
-#-----------#
-# Sim: DAG with unmeasured confounder beta = 0.1
-#-----------#
-
-data_confounder_l_train <- simcausal::sim(DAG = D_confounder_l_set,
-                                        n = n_train,
-                                        rndseed = SEED,
-                                        verbose = FALSE)
-
-data_confounder_l_train <- data_confounder_l_train[,-1]
-data_confounder_l_train$Sex <- factor(data_confounder_l_train$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_l_train$Risk <- factor(data_confounder_l_train$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_confounder_l_train <- data.table(data_confounder_l_train)
-data_confounder_l_train[, C := NULL]
+data_no_confounder_counterfactual_class1 <- data_no_confounder_counterfactual[["I1"]]
+data_no_confounder_counterfactual_class1 <- data_no_confounder_counterfactual_class1[,-1]
+data_no_confounder_counterfactual_class1$A <- factor(data_no_confounder_counterfactual_class1$A, levels = c(0:1), labels = c("0", "1"))
+data_no_confounder_counterfactual_class1$Y <- factor(data_no_confounder_counterfactual_class1$Y, levels = c(0:1), labels = c("0", "1"))
+data_no_confounder_counterfactual_class1 <- data.table(data_no_confounder_counterfactual_class1)
 
 
-# test data + counterfactual data
-
-A <- node("Sex", distr = "rbern", prob = 0.69)
-D_confounder_l_set <- D_confounder_l_set + action("A", nodes = A) # no intervention
-A1 <- node("Sex", distr = "rbern", prob = 0.69)
-D_confounder_l_set <- D_confounder_l_set + action("A1", nodes = A1)
-A0 <- node("Sex", distr = "rbern", prob = 0.31)
-D_confounder_l_set <- D_confounder_l_set + action("A0", nodes = A0)
-
-data_confounder_l_counterfactual<- simcausal::sim(DAG = D_confounder_l_set,
-                                                 actions = c("A", "A1", "A0"),
-                                                 n = n_test,
-                                                 rndseed = SEED,
-                                                 verbose = FALSE)
-
-data_confounder_l_test <- data_confounder_l_counterfactual[["A"]]
-data_confounder_l_test <- data_confounder_l_test[,-1]
-data_confounder_l_test$Sex <- factor(data_confounder_l_test$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_l_test$Risk <- factor(data_confounder_l_test$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_confounder_l_test <- data.table(data_confounder_l_test)
-data_confounder_l_test[, C := NULL]
-
-data_confounder_l_counterfactual_female <- data_confounder_l_counterfactual[["A0"]]
-data_confounder_l_counterfactual_female <- data_confounder_l_counterfactual_female[,-1]
-data_confounder_l_counterfactual_female$Sex <- factor(data_confounder_l_counterfactual_female$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_l_counterfactual_female$Risk <- factor(data_confounder_l_counterfactual_female$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_confounder_l_counterfactual_female <- data.table(data_confounder_l_counterfactual_female)
-data_confounder_l_counterfactual_female[, C := NULL]
-
-data_confounder_l_counterfactual_male <- data_confounder_l_counterfactual[["A1"]]
-data_confounder_l_counterfactual_male <- data_confounder_l_counterfactual_male[,-1]
-data_confounder_l_counterfactual_male$Sex <- factor(data_confounder_l_counterfactual_male$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_l_counterfactual_male$Risk <- factor(data_confounder_l_counterfactual_male$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_confounder_l_counterfactual_male <- data.table(data_confounder_l_counterfactual_male)
-data_confounder_l_counterfactual_male[, C := NULL]
-
-
-#-----------#
-# Sim: DAG with unmeasured confounder beta = 0.7
-#-----------#
+#----------------------------------#
+#### 3. Simulation Data with confounder  ####
+#----------------------------------#
 
 data_confounder_s_train <- simcausal::sim(DAG = D_confounder_s_set,
                                           n = n_train,
@@ -197,47 +114,46 @@ data_confounder_s_train <- simcausal::sim(DAG = D_confounder_s_set,
                                           verbose = FALSE)
 
 data_confounder_s_train <- data_confounder_s_train[,-1]
-data_confounder_s_train$Sex <- factor(data_confounder_s_train$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_s_train$Risk <- factor(data_confounder_s_train$Risk, levels = c(0:1), labels = c("bad", "good"))
+data_confounder_s_train$A <- factor(data_confounder_s_train$A, levels = c(0:1), labels = c("0", "1"))
+data_confounder_s_train$Y <- factor(data_confounder_s_train$Y, levels = c(0:1), labels = c("0", "1"))
 data_confounder_s_train <- data.table(data_confounder_s_train)
 data_confounder_s_train[, C := NULL]
 
 
 # test data + counterfactual data
 
-A <- node("Sex", distr = "rbern", prob = 0.69)
-D_confounder_s_set <- D_confounder_s_set + action("A", nodes = A) # no intervention
-A1 <- node("Sex", distr = "rbern", prob = 0.69)
-D_confounder_s_set <- D_confounder_s_set + action("A1", nodes = A1)
-A0 <- node("Sex", distr = "rbern", prob = 0.31)
-D_confounder_s_set <- D_confounder_s_set + action("A0", nodes = A0)
+I <- node("A", distr = "rbern", prob = plogis(0.5 + 0.7*C))
+D_confounder_s_set <- D_confounder_s_set + action("I", nodes = I) # no intervention
+I1 <- node("A", distr = "rbern", prob = 1)
+D_confounder_s_set <- D_confounder_s_set + action("I1", nodes = I1)
+I0 <- node("A", distr = "rbern", prob = 0)
+D_confounder_s_set <- D_confounder_s_set + action("I0", nodes = I0)
 
 data_confounder_s_counterfactual <- simcausal::sim(DAG = D_confounder_s_set,
-                                                  actions = c("A", "A1", "A0"),
+                                                  actions = c("I", "I1", "I0"),
                                                   n = n_test,
                                                   rndseed = SEED,
                                                   verbose = FALSE)
 
-data_confounder_s_test <- data_confounder_s_counterfactual[["A"]]
+data_confounder_s_test <- data_confounder_s_counterfactual[["I"]]
 data_confounder_s_test <- data_confounder_s_test[,-1]
-data_confounder_s_test$Sex <- factor(data_confounder_s_test$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_s_test$Risk <- factor(data_confounder_s_test$Risk, levels = c(0:1), labels = c("bad", "good"))
+data_confounder_s_test$A <- factor(data_confounder_s_test$A, levels = c(0:1), labels = c("0", "1"))
+data_confounder_s_test$Y <- factor(data_confounder_s_test$Y, levels = c(0:1), labels = c("0", "1"))
 data_confounder_s_test <- data.table(data_confounder_s_test)
 data_confounder_s_test[, C := NULL]
 
-data_confounder_s_counterfactual_female <- data_confounder_s_counterfactual[["A0"]]
-data_confounder_s_counterfactual_female <- data_confounder_s_counterfactual_female[,-1]
-data_confounder_s_counterfactual_female$Sex <- factor(data_confounder_s_counterfactual_female$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_s_counterfactual_female$Risk <- factor(data_confounder_s_counterfactual_female$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_confounder_s_counterfactual_female <- data.table(data_confounder_s_counterfactual_female)
-data_confounder_s_counterfactual_female[, C := NULL]
+data_confounder_s_counterfactual_class0 <- data_confounder_s_counterfactual[["I0"]]
+data_confounder_s_counterfactual_class0 <- data_confounder_s_counterfactual_class0[,-1]
+data_confounder_s_counterfactual_class0$A <- factor(data_confounder_s_counterfactual_class0$A, levels = c(0:1), labels = c("0", "1"))
+data_confounder_s_counterfactual_class0$Y <- factor(data_confounder_s_counterfactual_class0$Y, levels = c(0:1), labels = c("0", "1"))
+data_confounder_s_counterfactual_class0 <- data.table(data_confounder_s_counterfactual_class0)
+data_confounder_s_counterfactual_class0[, C := NULL]
 
-data_confounder_s_counterfactual_male <- data_confounder_s_counterfactual[["A1"]]
-data_confounder_s_counterfactual_male <- data_confounder_s_counterfactual_male[,-1]
-data_confounder_s_counterfactual_male$Sex <- factor(data_confounder_s_counterfactual_male$Sex, levels = c(0:1), labels = c("female", "male"))
-data_confounder_s_counterfactual_male$Risk <- factor(data_confounder_s_counterfactual_male$Risk, levels = c(0:1), labels = c("bad", "good"))
-data_confounder_s_counterfactual_male <- data.table(data_confounder_s_counterfactual_male)
-data_confounder_s_counterfactual_male[, C := NULL]
-
+data_confounder_s_counterfactual_class1 <- data_confounder_s_counterfactual[["I1"]]
+data_confounder_s_counterfactual_class1 <- data_confounder_s_counterfactual_class1[,-1]
+data_confounder_s_counterfactual_class1$A <- factor(data_confounder_s_counterfactual_class1$A, levels = c(0:1), labels = c("0", "1"))
+data_confounder_s_counterfactual_class1$Y <- factor(data_confounder_s_counterfactual_class1$Y, levels = c(0:1), labels = c("0", "1"))
+data_confounder_s_counterfactual_class1 <- data.table(data_confounder_s_counterfactual_class1)
+data_confounder_s_counterfactual_class1[, C := NULL]
 
 

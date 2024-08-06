@@ -16,29 +16,24 @@ generations = 30L
 # Data without unmeasured confounder
 #-----------#
 
-### Data ##
-# data_no_confounder_train # train data
-# data_no_confounder_test # test data
-# data_no_confounder_counterfactual_female # counterfactual data do(Sex = female)
-# data_no_confounder_counterfactual_male # counterfactual data do(Sex = male)
 
-idxs = which(data_no_confounder_test$Sex == "male") # row id for Sex = male in test data
+idxs = which(data_no_confounder_test$A == "1") 
 
 ### Fitting Predictors ###
 
 # Logistic Regression
 set.seed(SEED)
 learner = mlr_learners$get("classif.log_reg")
-task = as_task_classif(data_no_confounder_train, target = "Risk")
+task = as_task_classif(data_no_confounder_train, target = "Y")
 learner$predict_type = "prob"
 set.seed(SEED)
 learner$train(task)
 # Predictor Object
-predictor_no_confounding_lg = iml::Predictor$new(learner, data = data_no_confounder_test, y = "Risk")
+predictor_no_confounding_lg = iml::Predictor$new(learner, data = data_no_confounder_test, y = "Y")
 
 # Random Forest
 set.seed(SEED)
-rf = randomForest(Risk ~ ., data = data_no_confounder_train)
+rf = randomForest(Y ~ ., data = data_no_confounder_train)
 # Predictor Object
 predictor_no_confounding_rf = iml::Predictor$new(rf, type = "prob", data = data_no_confounder_test)
 
@@ -46,10 +41,10 @@ predictor_no_confounding_rf = iml::Predictor$new(rf, type = "prob", data = data_
 
 ### AMPD and MBE for true Counterfactuals ###
 # With Logistic Regression
-res_true_no_confounding_rf <- calculate_ampd_mbe(predictor_no_confounding_rf, data_no_confounder_test, data_no_confounder_counterfactual_female, idxs)
+res_true_no_confounding_rf <- calculate_ampd_mbe(predictor_no_confounding_rf, data_no_confounder_counterfactual_class1, data_no_confounder_counterfactual_class0, idxs)
 
 # With Random Forest
-res_true_no_confounding_lg <- calculate_ampd_mbe(predictor_no_confounding_lg, data_no_confounder_test, data_no_confounder_counterfactual_female, idxs)
+res_true_no_confounding_lg <- calculate_ampd_mbe(predictor_no_confounding_lg, data_no_confounder_counterfactual_class1, data_no_confounder_counterfactual_class0, idxs)
 
 
 ### generate mocf counterfactuals and calculate AMPD and MBE ###
@@ -63,90 +58,29 @@ predictor <- predictor_no_confounding_lg
 res_gen_no_confounding_lg <- calculate_ampd_mbe_moc(predictor, data_no_confounder_test, idxs)
 
 
-
-
-#-----------#
-# Data with unmeasured confounder beta = 0.1
-#-----------#
-
-
-
-### Data ##
-data_confounder_l_train # train data
-data_confounder_l_test # test data
-data_confounder_l_counterfactual_female # counterfactual data do(Sex = female)
-data_confounder_l_counterfactual_male # counterfactual data do(Sex = male)
-
-idxs = which(data_confounder_l_test$Sex == "male") # row id for Sex = male in test data
-
-### Fitting Predictors ###
-
-# Logistic Regression
-set.seed(SEED)
-learner = mlr_learners$get("classif.log_reg")
-task = as_task_classif(data_confounder_l_train, target = "Risk")
-learner$predict_type = "prob"
-set.seed(SEED)
-learner$train(task)
-# Predictor Object
-predictor_confounding_l_lg = iml::Predictor$new(learner, data = data_confounder_l_test, y = "Risk")
-
-# Random Forest
-set.seed(SEED)
-rf = randomForest(Risk ~ ., data = data_confounder_l_train)
-# Predictor Object
-predictor_confounding_l_rf = iml::Predictor$new(rf, type = "prob", data = data_confounder_l_test)
-
-
-
-
-### AMPD and MBE for true Counterfactuals ###
-# With Logistic Regression
-res_true_confounding_l_rf <- calculate_ampd_mbe(predictor_confounding_l_rf, data_confounder_l_test, data_confounder_l_counterfactual_female, idxs)
-
-# With Random Forest
-res_true_confounding_l_lg <- calculate_ampd_mbe(predictor_confounding_l_lg, data_confounder_l_test, data_confounder_l_counterfactual_female, idxs)
-
-
-### generate mocf counterfactuals and calculate AMPD and MBE ###
-# With Logistic Regression
-predictor <- predictor_confounding_l_rf
-res_gen_confounding_l_rf <- calculate_ampd_mbe_moc(predictor, data_confounder_l_test, idxs)
-
-# With Random Forest
-predictor <- predictor_confounding_l_lg
-res_gen_confounding_l_lg <- calculate_ampd_mbe_moc(predictor, data_confounder_l_test, idxs)
-
-
 #-----------#
 # Data with unmeasured confounder beta = 0.9
 #-----------#
 
 
 
-### Data ##
-data_confounder_s_train # train data
-data_confounder_s_test # test data
-data_confounder_s_counterfactual_female # counterfactual data do(Sex = female)
-data_confounder_s_counterfactual_male # counterfactual data do(Sex = male)
-
-idxs = which(data_confounder_s_test$Sex == "male") # row id for Sex = male in test data
+idxs = which(data_confounder_s_test$A == "1") 
 
 ### Fitting Predictors ###
 
 # Logistic Regression
 set.seed(SEED)
 learner = mlr_learners$get("classif.log_reg")
-task = as_task_classif(data_confounder_s_train, target = "Risk")
+task = as_task_classif(data_confounder_s_train, target = "Y")
 learner$predict_type = "prob"
 set.seed(SEED)
 learner$train(task)
 # Predictor Object
-predictor_confounding_s_lg = iml::Predictor$new(learner, data = data_confounder_s_test, y = "Risk")
+predictor_confounding_s_lg = iml::Predictor$new(learner, data = data_confounder_s_test, y = "Y")
 
 # Random Forest
 set.seed(SEED)
-rf = randomForest(Risk ~ ., data = data_confounder_s_train)
+rf = randomForest(Y ~ ., data = data_confounder_s_train)
 # Predictor Object
 predictor_confounding_s_rf = iml::Predictor$new(rf, type = "prob", data = data_confounder_s_test)
 
@@ -155,10 +89,10 @@ predictor_confounding_s_rf = iml::Predictor$new(rf, type = "prob", data = data_c
 
 ### AMPD and MBE for true Counterfactuals ###
 # With Logistic Regression
-res_true_confounding_s_rf <- calculate_ampd_mbe(predictor_confounding_s_rf, data_confounder_s_test, data_confounder_s_counterfactual_female, idxs)
+res_true_confounding_s_rf <- calculate_ampd_mbe(predictor_confounding_s_rf, data_confounder_s_counterfactual_class1, data_confounder_s_counterfactual_class0, idxs)
 
 # With Random Forest
-res_true_confounding_s_lg <- calculate_ampd_mbe(predictor_confounding_s_lg, data_confounder_s_test, data_confounder_s_counterfactual_female, idxs)
+res_true_confounding_s_lg <- calculate_ampd_mbe(predictor_confounding_s_lg, data_confounder_s_counterfactual_class1, data_confounder_s_counterfactual_class0, idxs)
 
 
 ### generate mocf counterfactuals and calculate AMPD and MBE ###
@@ -178,10 +112,6 @@ results_aware <- list(res_true_no_confounding_lg = res_true_no_confounding_lg,
                       res_true_no_confounding_rf = res_true_no_confounding_rf,
                       res_gen_no_confounding_lg = res_gen_no_confounding_lg, 
                       res_gen_no_confounding_rf = res_gen_no_confounding_rf,
-                      res_true_confounding_l_lg = res_true_confounding_l_lg, 
-                      res_true_confounding_l_rf = res_true_confounding_l_rf, 
-                      res_gen_confounding_l_lg = res_gen_confounding_l_lg, 
-                      res_gen_confounding_l_rf = res_gen_confounding_l_rf,
                       res_true_confounding_s_lg = res_true_confounding_s_lg, 
                       res_true_confounding_s_rf = res_true_confounding_s_rf,
                       res_gen_confounding_s_lg = res_gen_confounding_s_lg,
