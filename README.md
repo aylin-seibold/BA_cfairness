@@ -1,7 +1,7 @@
 # Challenges of Counterfactual Fairness: Multi-Objective Counterfactual Fairness and its Robustness to Confounders
 - - -
 
-This repository contains the code and resources for my Bachelor thesis: "Challenges of Counterfactual Fairness: Multi-Objective Counterfactual Fairness and its Robustness to Confounders". In this thesis, a simulation study was conducted to investigate the robustness of multi-objective counterfactual fairness methods to unmeasured confounders. 
+This repository contains the code and resources for my Bachelor thesis. In this thesis, a simulation study was conducted to investigate the robustness of multi-objective counterfactual fairness to unmeasured confounders.
 
 ## Directory Structure
 - - -
